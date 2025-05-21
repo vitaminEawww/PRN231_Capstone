@@ -1,10 +1,5 @@
 ﻿using DataAccess.Enums;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataAccess.Entities
 {
@@ -18,16 +13,16 @@ namespace DataAccess.Entities
         public string Username { get; set; }
 
         [Required]
+        [MaxLength(100)]
+        public string FullName { get; set; }
+
+        [Required]
         [EmailAddress]
         [MaxLength(100)]
         public string Email { get; set; }
 
         [Required]
         public string PasswordHash { get; set; }
-
-        [Required]
-        [MaxLength(50)]
-        public string MembershipType { get; set; }
 
         public DateTime JoinDate { get; set; } = DateTime.Now;
 
@@ -36,12 +31,11 @@ namespace DataAccess.Entities
         [Required]
         public UserRole Role { get; set; } = UserRole.User;
 
-        public ICollection<SmokingLog> SmokingLogs { get; set; }
-        public ICollection<QuitPlan> QuitPlans { get; set; }
-        public ICollection<ProgressTracking> ProgressTrackings { get; set; }
-        public ICollection<Achievement> Achievements { get; set; }
-        public ICollection<BlogPost> BlogPosts { get; set; }
-        public ICollection<Feedback> Feedbacks { get; set; }
-        public ICollection<TrainerChat> TrainerChats { get; set; }
+        public virtual ICollection<UserMembership> UserMemberships { get; set; }
+        public virtual ICollection<UserPlan> UserPlans { get; set; }
+        public virtual ICollection<UserAchievement> UserAchievements { get; set; }
+        public virtual ICollection<Post> Posts { get; set; }
+        public virtual ICollection<Comment> Comments { get; set; }
+        public virtual ICollection<TrainerChat> TrainerChats { get; set; }
     }
 }
