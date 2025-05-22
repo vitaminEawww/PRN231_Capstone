@@ -1,5 +1,11 @@
 using DataAccess.Data;
+using DataAccess.MappingConfigs;
 using Microsoft.EntityFrameworkCore;
+using Repositories.IRepositories;
+using Repositories.Repository;
+using Services.IServices;
+using Services.Service;
+
 
 namespace WebAPI
 {
@@ -16,8 +22,14 @@ namespace WebAPI
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-      options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            //Middleware
 
+
+
+            MappingRegistration.RegisterMappings();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<IUserService, UserService>();
 
             var app = builder.Build();
 
