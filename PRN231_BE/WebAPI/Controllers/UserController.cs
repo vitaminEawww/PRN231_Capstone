@@ -1,4 +1,5 @@
 ﻿using DataAccess.Models.Users;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.IServices;
@@ -16,6 +17,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("register")]
+        
         public async Task<IActionResult> Register(UserCreateDTO userDto)
         {
             var response = await _userService.CreateUserAsync(userDto);
@@ -36,6 +38,7 @@ namespace WebAPI.Controllers
             return StatusCode((int)response.StatusCode, response);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(int id)
         {
@@ -43,6 +46,19 @@ namespace WebAPI.Controllers
             return StatusCode((int)response.StatusCode, response);
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var response = await _userService.DeleteUserAsync(id);
+            return StatusCode((int)response.StatusCode, response);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
+        {
+            var response = await _userService.LoginAsync(loginDto.Email, loginDto.Password);
+            return StatusCode((int)response.StatusCode, response);
+        }
 
 
     }

@@ -16,6 +16,8 @@ namespace Services.IServices
         Task<ApiResponse> CreateUserAsync(UserCreateDTO userDto);
 
         Task<ApiResponse> UpdateUserAsync(UserUpdateDTO userDto);
-        Task DeleteUserAsync(int userId);
+        Task<ApiResponse> DeleteUserAsync(int userId);
+        
+        Task<ApiResponse> LoginAsync(string email, string password);
     }
 }

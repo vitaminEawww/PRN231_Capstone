@@ -16,9 +16,11 @@ namespace Services.Service
     public class UserService : IUserService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public UserService(IUnitOfWork unitOfWork)
+        private readonly JwtTokenService _jwtTokenService;
+        public UserService(IUnitOfWork unitOfWork, JwtTokenService jwtTokenService)
         {
             _unitOfWork = unitOfWork;
+            _jwtTokenService = jwtTokenService;
         }
         public async Task<ApiResponse> CreateUserAsync(UserCreateDTO userDto)
         {
@@ -60,9 +62,39 @@ namespace Services.Service
             }
         }
 
-        public Task DeleteUserAsync(int userId)
+        public async  Task<ApiResponse> DeleteUserAsync(int userId)
         {
-            throw new NotImplementedException();
+            var response = new ApiResponse();
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    response.ErrorMessages.Add("User không tồn tại.");
+                    return response;
+                }
+
+                // Soft delete: chỉ đổi Status thành false
+                user.Status = false;
+
+                _unitOfWork.Users.Update(user);
+                await _unitOfWork.SaveAsync();
+
+                response.IsSuccess = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result = "User đã được vô hiệu hóa.";
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                response.ErrorMessages.Add(ex.Message);
+                return response;
+            }
         }
 
         public async Task<ApiResponse> GetAllUserAsync(int pageNumber, int pageSize)
@@ -106,6 +138,56 @@ namespace Services.Service
                 response.IsSuccess = true;
                 response.StatusCode = HttpStatusCode.OK;
                 response.Result = user;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                response.ErrorMessages.Add(ex.Message);
+                return response;
+            }
+        }
+
+        public async Task<ApiResponse> LoginAsync(string email, string password)
+        {
+            var response = new ApiResponse();
+            try
+            {
+                var user = (await _unitOfWork.Users.GetAllAsync())
+                            .FirstOrDefault(u => u.Email == email);
+
+                if (user == null)
+                {
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    response.ErrorMessages.Add("Email không tồn tại.");
+                    return response;
+                }
+
+                if (!user.Status)
+                {
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.Forbidden;
+                    response.ErrorMessages.Add("Tài khoản đã bị khóa.");
+                    return response;
+                }
+
+                bool passwordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+                if (!passwordValid)
+                {
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.Unauthorized;
+                    response.ErrorMessages.Add("Mật khẩu không đúng.");
+                    return response;
+                }
+
+                var token = _jwtTokenService.GenerateToken(user);
+
+                response.IsSuccess = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result = new { Token = token, User = user };
+
                 return response;
             }
             catch (Exception ex)
