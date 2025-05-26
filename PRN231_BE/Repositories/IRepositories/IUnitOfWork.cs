@@ -10,6 +10,10 @@ namespace Repositories.IRepositories
     public interface IUnitOfWork : IDisposable
     {
         IGenericRepository<User> Users { get; }
+        IGenericRepository<Feature> Features { get; }
+
+        IGenericRepository<MemFeature> MemFeatures { get; }
+        IGenericRepository<Membership> MemberShips { get; }
         Task<int> SaveAsync();
     }
 }

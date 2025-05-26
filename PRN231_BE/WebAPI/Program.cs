@@ -2,6 +2,7 @@ using DataAccess.Common;
 using DataAccess.Data;
 using DataAccess.MappingConfigs;
 using DataAccess.Models.Auth;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -81,6 +82,9 @@ namespace WebAPI
             MappingRegistration.RegisterMappings();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IFeatureService, FeatureService>();
+            builder.Services.AddScoped<IMemFeatureService, MemFeatureService>();
+            builder.Services.AddScoped<IMembershipService, MembershipService>();
             builder.Services.AddScoped<JwtTokenService>();
             var app = builder.Build();
 
