@@ -14,10 +14,16 @@ namespace Repositories.Repository
         private readonly ApplicationDbContext _dbContext;
         public IGenericRepository<User> Users { get; }
 
+        public IGenericRepository<Post> Posts { get; }
+
+        public IGenericRepository<Comment> Comments { get; }
+
         public UnitOfWork(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
             Users = new GenericRepository<User>(_dbContext);
+            Posts = new GenericRepository<Post>(_dbContext);
+            Comments = new GenericRepository<Comment>(_dbContext);
         }
 
 
