@@ -20,4 +20,6 @@ public class Membership
     public int Duration { get; set; }
 
     public bool Status { get; set; } = true;
+
+    public virtual ICollection<MemFeature> MemFeatures { get; set; } = new List<MemFeature>();
 }

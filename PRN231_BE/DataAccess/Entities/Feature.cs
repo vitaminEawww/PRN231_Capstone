@@ -13,4 +13,6 @@ public class Feature
 
     [MaxLength(1000)]
     public string Description { get; set; }
+
+    public virtual ICollection<MemFeature> MemFeatures { get; set; } = new List<MemFeature>();
 }

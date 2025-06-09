@@ -1,22 +1,36 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DataAccess.Entities;
 
 public class DailyTask
 {
     [Key]
-    public int ProgressID { get; set; }
+    public int Id { get; set; }
 
     [Required]
-    public int UserID { get; set; }
+    public int PhaseId { get; set; }
 
-    public DateTime Date { get; set; } = DateTime.Now;
+    [Required]
+    public int DayNumber { get; set; }
 
-    public int CigarettesAvoided { get; set; }
+    [Required]
+    [MaxLength(200)]
+    public string Title { get; set; }
 
-    public decimal MoneySaved { get; set; }
+    [Required]
+    [MaxLength(1000)]
+    public string Description { get; set; }
 
-    public bool IsCompleted { get; set; } = true;
+    [Required]
+    public bool IsActive { get; set; } = true;
 
-    public DailyLog DailyLog { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedAt { get; set; }
+
+    [ForeignKey("PhaseId")]
+    public virtual Phase Phase { get; set; }
+
+    public virtual DailyLog DailyLog { get; set; }
 }
