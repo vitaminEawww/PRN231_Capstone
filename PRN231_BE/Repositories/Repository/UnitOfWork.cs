@@ -17,10 +17,16 @@ namespace Repositories.Repository
         public IUserAchievementRepository UserAchievements { get; }
 
 
+        public IGenericRepository<Post> Posts { get; }
+
+        public IGenericRepository<Comment> Comments { get; }
+
         public UnitOfWork(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
             Users = new GenericRepository<User>(_dbContext);
+            Posts = new GenericRepository<Post>(_dbContext);
+            Comments = new GenericRepository<Comment>(_dbContext);
             Memberships = new MembershipRepository(_dbContext);
             Features = new FeatureRepository(_dbContext);
             Plans = new PlanRepository(_dbContext);

@@ -81,6 +81,8 @@ namespace WebAPI
             MappingRegistration.RegisterMappings();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IPostService, PostService>();
+            builder.Services.AddScoped<ICommentService, CommentService>();
             builder.Services.AddScoped<IMembershipService, MembershipService>();
             builder.Services.AddScoped<IFeatureService, FeatureService>();
             builder.Services.AddScoped<IPlanService, PlanService>();

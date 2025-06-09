@@ -7,6 +7,8 @@ namespace Repositories.IRepositories
     public interface IUnitOfWork : IDisposable
     {
         IGenericRepository<User> Users { get; }
+        IGenericRepository<Post> Posts { get; }
+        IGenericRepository<Comment> Comments { get; }
         IFeatureRepository Features { get; }
         IPlanRepository Plans { get; }
         IPhaseRepository Phases { get; }

@@ -7,6 +7,8 @@ namespace DataAccess.MappingConfigs
         public static void RegisterMappings()
         {
             TypeAdapterConfig.GlobalSettings.Scan(typeof(UserMappingConfig).Assembly);
+            TypeAdapterConfig.GlobalSettings.Scan(typeof(PostMappingConfig).Assembly);
+            TypeAdapterConfig.GlobalSettings.Scan(typeof(CommentMappingConfig).Assembly);
         }
     }
 }
