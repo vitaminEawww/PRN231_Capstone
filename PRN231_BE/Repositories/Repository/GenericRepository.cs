@@ -1,28 +1,17 @@
 ﻿using DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Repositories.IRepositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Repositories.Repository
 {
-    public class GenericRepository<T> : IGenericRepository<T> where T : class
+    public class GenericRepository<T>(ApplicationDbContext context) : IGenericRepository<T> where T : class
     {
-        protected readonly ApplicationDbContext _context;
-        protected readonly DbSet<T> _dbSet;
-
-        public GenericRepository( ApplicationDbContext context)
-        {
-            _context = context;
-            _dbSet = context.Set<T>();
-        }
+        protected readonly ApplicationDbContext _context = context;
+        protected readonly DbSet<T> _dbSet = context.Set<T>();
 
         public async Task AddAsync(T entity)
         {
-            await _dbSet.AddAsync(entity);   
+            await _dbSet.AddAsync(entity);
         }
 
         public void Delete(T entity)

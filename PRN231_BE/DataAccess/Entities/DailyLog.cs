@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using DataAccess.Enums;
 
 namespace DataAccess.Entities;
@@ -8,22 +9,44 @@ public class DailyLog
     [Key]
     public int Id { get; set; }
 
+    [Required]
     public int UserId { get; set; }
 
-    public int PhaseId { get; set; }
+    [Required]
+    public int DailyTaskId { get; set; }
 
+    [Required]
     public DateTime LogDate { get; set; } = DateTime.UtcNow;
 
-    public int CigarettesSmokedCount { get; set; }
-
-    public int CravingsCount { get; set; }
+    [Required]
+    public bool IsCompleted { get; set; }
 
     [MaxLength(1000)]
     public string Notes { get; set; }
 
-    public int MoodRating { get; set; }  // Scale of 1-10
+    public int? MoodRating { get; set; }  // Scale of 1-5
 
-    public bool CompletedDailyChallenge { get; set; }
+    public int? CravingsCount { get; set; }
+
+    public int? CigarettesSmoked { get; set; }
+
+    public decimal? MoneySaved { get; set; }
 
     public DailyLogStatus Status { get; set; } = DailyLogStatus.NotStarted;
+
+    public int? MinutesOfExercise { get; set; }  // Track exercise minutes for the day
+
+    public int? WaterIntake { get; set; }  // Track water intake in ml
+
+    public bool? UsedNicotineReplacement { get; set; }  // Track if nicotine replacement was used
+
+    [ForeignKey("UserId")]
+    public virtual User User { get; set; }
+
+    [ForeignKey("DailyTaskId")]
+    public virtual DailyTask DailyTask { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedAt { get; set; }
 }
