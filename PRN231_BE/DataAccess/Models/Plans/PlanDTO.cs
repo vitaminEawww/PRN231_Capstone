@@ -18,6 +18,7 @@ namespace DataAccess.Models.Plans
 
         [Required]
         public string Description { get; set; }
+        public int DurationDays { get; set; }
 
         public List<PhaseCreateDTO> Phases { get; set; }
     }
@@ -41,6 +42,8 @@ namespace DataAccess.Models.Plans
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+
+        public int OrderNumber { get; set; }
         public int DurationDays { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime EndDate { get; set; }
@@ -61,6 +64,8 @@ namespace DataAccess.Models.Plans
         [Required]
         [Range(1, int.MaxValue)]
         public int DurationDays { get; set; }
+
+        public int OrderNumber { get; set; }
     }
 
     public class PhaseUpdateDTO

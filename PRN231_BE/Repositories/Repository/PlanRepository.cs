@@ -43,6 +43,7 @@ namespace Repositories.Repository
                 phase.PlanId = planId;
                 phase.CreatedDate = DateTime.UtcNow;
                 phase.EndDate = phase.CreatedDate.AddDays(phase.DurationDays);
+                phase.IsCompleted = 0.0; // Set default progress
                 await _context.Set<Phase>().AddAsync(phase);
             }
 

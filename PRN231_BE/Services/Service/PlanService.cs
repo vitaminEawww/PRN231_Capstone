@@ -47,6 +47,12 @@ namespace Services.Service
             try
             {
                 var plan = planDto.Adapt<Plan>();
+                
+                // Set required default values after mapping
+                plan.CreatedDate = DateTime.UtcNow;
+                plan.EndDate = DateTime.UtcNow.AddDays(plan.DurationDays);
+                plan.IsActive = true;
+                
                 await _unitOfWork.Plans.AddAsync(plan);
                 await _unitOfWork.SaveAsync();
 
