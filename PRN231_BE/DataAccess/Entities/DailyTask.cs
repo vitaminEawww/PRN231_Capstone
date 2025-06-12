@@ -32,5 +32,5 @@ public class DailyTask
     [ForeignKey("PhaseId")]
     public virtual Phase Phase { get; set; }
 
-    public virtual DailyLog DailyLog { get; set; }
+    public virtual ICollection<DailyLog> DailyLogs { get; set; } = new List<DailyLog>();
 }

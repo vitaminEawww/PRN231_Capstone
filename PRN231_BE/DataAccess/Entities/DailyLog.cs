@@ -40,6 +40,16 @@ public class DailyLog
 
     public bool? UsedNicotineReplacement { get; set; }  // Track if nicotine replacement was used
 
+    // Health Tracking Fields
+    public decimal? Weight { get; set; }  // Weight in kg
+    public int? SleepHours { get; set; }  // Hours of sleep
+    public int? StressLevel { get; set; }  // Stress level 1-10
+    public int? HeartRate { get; set; }  // Heart rate in bpm
+    public int? SystolicBP { get; set; }  // Systolic blood pressure
+    public int? DiastolicBP { get; set; }  // Diastolic blood pressure
+    [MaxLength(500)]
+    public string HealthNotes { get; set; }  // Additional health notes
+
     [ForeignKey("UserId")]
     public virtual User User { get; set; }
 

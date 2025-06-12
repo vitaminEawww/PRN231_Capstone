@@ -20,6 +20,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<TrainerChat> TrainerChats { get; set; }
     public DbSet<UserAchievement> UserAchievements { get; set; }
     public DbSet<UserPlan> UserPlans { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -107,6 +108,27 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasMany(p => p.Phases)
             .WithOne(ph => ph.Plan)
             .HasForeignKey(ph => ph.PlanId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure one-to-many relationship between User and DailyLog
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.DailyLogs)
+            .WithOne(dl => dl.User)
+            .HasForeignKey(dl => dl.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure one-to-many relationship between DailyTask and DailyLog
+        modelBuilder.Entity<DailyTask>()
+            .HasMany(dt => dt.DailyLogs)
+            .WithOne(dl => dl.DailyTask)
+            .HasForeignKey(dl => dl.DailyTaskId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure one-to-many relationship between User and Notification
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Notifications)
+            .WithOne(n => n.User)
+            .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Configure many-to-many relationship between Membership and Feature through MemFeature
