@@ -1,0 +1,70 @@
+name: Deploy WebAPI Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4 # 🔄 Checkout code
+
+      - name: 🛠️ Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: 🔑 Set up SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 🐳 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 📦 Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./WebAPI/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/webapi:prod
+          build-args: |
+            BUILD_CONFIGURATION=Release
+
+      - name: 📋 Copy env file to VPS
+        run: |
+          echo "${{ secrets.PROD_ENV_FILE }}" > .prod.env
+          scp .prod.env ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/${{ secrets.VPS_USER }}/WebAPI/
+
+      - name: 🚢 Deploy to VPS
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+            cd /home/${{ secrets.VPS_USER }}/WebAPI && \
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/webapi:prod && \
+            docker stop WebAPI-prod || true && \
+            docker rm WebAPI-prod || true && \
+            mkdir -p /var/www/webapi/wwwroot/uploads && \
+            docker run -d \
+              --name WebAPI-prod \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -p 8081:8081 \
+              -v /var/www/webapi/wwwroot/uploads:/app/wwwroot/uploads \
+              --env-file .prod.env \
+              --log-opt max-size=10m \
+              --log-opt max-file=3 \
+              ${{ secrets.DOCKERHUB_USERNAME }}/webapi:prod"
+
+      - name: 🗑️ Prune Docker
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+            docker system prune -af"
