@@ -62,7 +62,7 @@ namespace Services.Services
                         UserName = request.Username,
                         Email = request.Email,
                         Phone = request.Phone,
-                        PasswordHash = HashPassword(request.Password),
+                        PasswordHash = Helper.HashPassword(request.Password),
                         Role = UserRole.Customer,
                         Status = UserStatus.Active,
                         JoinDate = DateTime.Now,
@@ -138,7 +138,7 @@ namespace Services.Services
                         UserName = request.Username,
                         Email = request.Email,
                         Phone = request.Phone,
-                        PasswordHash = HashPassword(request.Password),
+                        PasswordHash = Helper.HashPassword(request.Password),
                         Role = UserRole.Coach,
                         Status = UserStatus.Active,
                         JoinDate = DateTime.Now,
@@ -231,7 +231,7 @@ namespace Services.Services
                 }
 
                 // Kiểm tra mật khẩu
-                if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                if (!Helper.VerifyPassword(request.Password, user.PasswordHash))
                 {
                     // Tăng failed attempts
                     user.FailedLoginAttempts++;
@@ -327,12 +327,6 @@ namespace Services.Services
 
 
         #region Private Helper Methods
-        private string HashPassword(string password)
-        {
-            return BCrypt.Net.BCrypt.HashPassword(password);
-        }
-
-
         private async Task CreateCustomerProfileAsync(User user, RegisterCustomerRequestDTO request)
         {
             var customer = new Customer
