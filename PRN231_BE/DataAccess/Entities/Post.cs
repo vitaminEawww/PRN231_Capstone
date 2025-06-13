@@ -1,29 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using DataAccess.Enums;
 
 namespace DataAccess.Entities;
 
-public class Post
+public partial class Post
 {
-    [Key]
-    public int PostId { get; set; }
+    public int Id { get; set; }
+    public int CustomerId { get; set; }
+    public string Title { get; set; } = null!;
+    public string Content { get; set; } = null!;
+    public PostType Type { get; set; }
+    public string? ImageUrl { get; set; }
+    public int LikeCount { get; set; } = 0;
+    public int CommentCount { get; set; } = 0;
+    public PostStatus Status { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
-    [Required]
-    [ForeignKey("User")]
-    public int UserId { get; set; }
-
-    public int Rating { get; set; }
-
-    public string Title { get; set; }
-
-    public string Content { get; set; }
-
-    public DateTime CreateDate { get; set; } = DateTime.Now;
-
-    public bool Status { get; set; } = true;
-
-    public User User { get; set; }
-
-    public virtual ICollection<Comment> Comments { get; set; }
-
+    public virtual Customer Customer { get; set; } = null!;
+    public virtual ICollection<PostComment> Comments { get; set; } = new List<PostComment>();
+    public virtual ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
 }

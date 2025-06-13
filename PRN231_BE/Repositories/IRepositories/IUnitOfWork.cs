@@ -8,13 +8,6 @@ namespace Repositories.IRepositories
     {
         IGenericRepository<User> Users { get; }
         IGenericRepository<Post> Posts { get; }
-        IGenericRepository<Comment> Comments { get; }
-        IFeatureRepository Features { get; }
-        IPlanRepository Plans { get; }
-        IPhaseRepository Phases { get; }
-        IAchievementRepository Achievements { get; }
-        IUserAchievementRepository UserAchievements { get; }
-        IMembershipRepository Memberships { get; }
         Task<int> SaveAsync();
     }
 }

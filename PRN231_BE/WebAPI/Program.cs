@@ -9,8 +9,8 @@ using Microsoft.OpenApi.Models;
 using Repositories.IRepositories;
 using Repositories.Repository;
 using Services.IServices;
-using Services.Service;
 using System.Text;
+using Services.Services;
 
 
 namespace WebAPI
@@ -81,12 +81,6 @@ namespace WebAPI
             MappingRegistration.RegisterMappings();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IPostService, PostService>();
-            builder.Services.AddScoped<ICommentService, CommentService>();
-            builder.Services.AddScoped<IMembershipService, MembershipService>();
-            builder.Services.AddScoped<IFeatureService, FeatureService>();
-            builder.Services.AddScoped<IPlanService, PlanService>();
-            builder.Services.AddScoped<IPhaseService, PhaseService>();
             builder.Services.AddScoped<JwtTokenService>();
             var app = builder.Build();
 
