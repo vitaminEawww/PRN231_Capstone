@@ -10,7 +10,7 @@ namespace DataAccess.MappingConfigs
         {
             config.NewConfig<UserCreateDTO, User>()
                 .Map(dest => dest.PasswordHash, src => HashPassword(src.Password))
-                .Ignore(dest => dest.UserID)
+                .Ignore(dest => dest.Id)
                 .IgnoreNullValues(true);
         }
 
