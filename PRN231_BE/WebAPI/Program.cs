@@ -95,20 +95,24 @@ namespace WebAPI
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtTokenService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+                    c.RoutePrefix = "";
+                });
             }
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCors("corspolicy");
             app.UseRouting();
-            app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
