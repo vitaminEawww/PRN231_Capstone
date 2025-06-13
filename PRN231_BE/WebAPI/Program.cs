@@ -22,48 +22,29 @@ namespace WebAPI
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
-            builder.Services.Configure<JwtSettings>(jwtSettingsSection);
-            var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
 
-            builder.Services.AddAuthentication(options =>
+            //*<=====Set up policy=====>
+            builder.Services.AddCors(opts =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtSettings.Audience,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                };
+                opts.AddPolicy("corspolicy",
+                    build => { build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader(); });
             });
 
-            builder.Services.AddAuthorization();
-            builder.Services.AddSwaggerGen(c =>
-            {
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    In = ParameterLocation.Header,
-                    Description = "Please enter token",
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT"
-                });
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
+            //* Swagger
+            builder.Services.AddSwaggerGen(option =>
+           {
+               option.SwaggerDoc("v1", new OpenApiInfo { Title = "Smoking Free API", Version = "v1" });
+               option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+               {
+                   In = ParameterLocation.Header,
+                   Description = "Please enter a valid token",
+                   Name = "Authorization",
+                   Type = SecuritySchemeType.Http,
+                   BearerFormat = "JWT",
+                   Scheme = "Bearer"
+               });
+               option.AddSecurityRequirement(new OpenApiSecurityRequirement
+               {
                     {
                         new OpenApiSecurityScheme
                         {
@@ -73,10 +54,42 @@ namespace WebAPI
                                 Id = "Bearer"
                             }
                         },
-                        new string[] {}
+                        new string[] { }
                     }
+               });
+           });
+
+            //*<=====Add Database=====>
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            builder.Services.AddDbContext<ApplicationDbContext>(opts => opts.UseSqlServer(connectionString,
+                options => { options.MigrationsAssembly("DataAccess"); }));
+
+            //* Jwt
+            var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
+            builder.Services.Configure<JwtSettings>(jwtSettingsSection);
+            var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
+
+            builder.Services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtSettings.Issuer,
+                        ValidateAudience = true,
+                        ValidAudience = jwtSettings.Audience,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
                 });
-            });
+            builder.Services.AddAuthorization();
+
 
             MappingRegistration.RegisterMappings();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -92,14 +105,13 @@ namespace WebAPI
             }
 
             app.UseHttpsRedirection();
-
+            app.UseStaticFiles();
+            app.UseCors("corspolicy");
+            app.UseRouting();
+            app.UseSession();
             app.UseAuthentication();
-
             app.UseAuthorization();
-
-
             app.MapControllers();
-
             app.Run();
         }
     }

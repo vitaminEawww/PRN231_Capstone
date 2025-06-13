@@ -37,4 +37,6 @@ public partial class Customer
     public virtual CustomerStatistics? Statistics { get; set; }
     public virtual ICollection<Leaderboard> LeaderboardEntries { get; set; } = new List<Leaderboard>();
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+
+    public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 }
