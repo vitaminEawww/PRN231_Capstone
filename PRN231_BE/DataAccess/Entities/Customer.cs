@@ -23,7 +23,7 @@ public partial class Customer
     public DateTime? LastLoginAt { get; set; }
 
     public virtual User? User { get; set; }
-    public virtual ICollection<SmokingRecord> SmokingRecords { get; set; } = new List<SmokingRecord>();
+    public virtual SmokingRecord? SmokingRecord { get; set; }
     public virtual ICollection<QuitPlan> QuitPlans { get; set; } = new List<QuitPlan>();
     public virtual ICollection<DailyProgress> DailyProgresses { get; set; } = new List<DailyProgress>();
     public virtual ICollection<UserBadge> UserBadges { get; set; } = new List<UserBadge>();
