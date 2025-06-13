@@ -21,6 +21,7 @@ public class Coach
 
     public virtual User? User { get; set; }
     public virtual ICollection<Consultation> Consultations { get; set; } = new List<Consultation>();
+    public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 
     public virtual RatingSummary? RatingSummary { get; set; }
 }
