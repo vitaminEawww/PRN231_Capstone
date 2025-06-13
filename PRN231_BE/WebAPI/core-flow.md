@@ -98,5 +98,3 @@
 - **Multi-channel support**: Various communication channels
 
 ---
-
-**Các flow này tạo thành một hệ sinh thái hoàn chỉnh**, hỗ trợ người dùng từ khâu đăng ký, ghi nhận tình trạng, lập kế hoạch, theo dõi tiến trình, nhận động viên, tương tác cộng đồng, đến tư vấn chuyên nghiệp - tất cả nhằm mục tiêu cuối cùng là giúp người dùng cai nghiện thuốc lá thành công.
