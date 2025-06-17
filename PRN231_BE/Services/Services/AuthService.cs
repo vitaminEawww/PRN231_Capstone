@@ -355,8 +355,6 @@ namespace Services.Services
             {
                 UserId = user.Id,
                 FullName = request.FullName,
-                Email = request.Email,
-                Phone = request.Phone,
                 AvatarUrl = string.IsNullOrEmpty(request.AvatarUrl)
                     ? ConstantModel.DefaultAvatar
                     : request.AvatarUrl,
