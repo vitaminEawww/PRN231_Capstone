@@ -38,7 +38,7 @@ namespace WebAPI.Controllers
             }
 
             var result = await _smokingRecordService.CreateSmokingRecordAsync(dto);
-            return Ok(result);
+            return StatusCode((int)result.StatusCode, result);
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace WebAPI.Controllers
         public async Task<ActionResult<ApiResponse>> GetCurrentSmokingRecord(int customerId)
         {
             var result = await _smokingRecordService.GetCurrentSmokingRecordAsync(customerId);
-            return Ok(result);
+            return StatusCode((int)result.StatusCode, result);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace WebAPI.Controllers
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
 
             var result = await _smokingRecordService.GetSmokingHistoryAsync(customerId, pageNumber, pageSize);
-            return Ok(result);
+            return StatusCode((int)result.StatusCode, result);
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace WebAPI.Controllers
         public async Task<ActionResult<ApiResponse>> GetSmokingRecordById(int id)
         {
             var result = await _smokingRecordService.GetSmokingRecordByIdAsync(id);
-            return Ok(result);
+            return StatusCode((int)result.StatusCode, result);
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace WebAPI.Controllers
             }
 
             var result = await _smokingRecordService.UpdateSmokingRecordAsync(id, dto);
-            return Ok(result);
+            return StatusCode((int)result.StatusCode, result);
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace WebAPI.Controllers
         public async Task<ActionResult<ApiResponse>> DeleteSmokingRecord(int id)
         {
             var result = await _smokingRecordService.DeleteSmokingRecordAsync(id);
-            return Ok(result);
+            return StatusCode((int)result.StatusCode, result);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace WebAPI.Controllers
             };
 
             var result = await _smokingRecordService.UpdateSmokingRecordAsync(id, updateDto);
-            return Ok(result);
+            return StatusCode((int)result.StatusCode, result);
         }
     }
 }
