@@ -95,8 +95,27 @@ namespace WebAPI
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtTokenService>();
+            builder.Services.AddScoped<IDataSeederService, DataSeederService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ISmokingRecordService, SmokingRecordService>();
+
             var app = builder.Build();
+
+            //* Seed data
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var dataSeederService = services.GetRequiredService<IDataSeederService>();
+                    dataSeederService.SeedDefaultDataAsync().Wait();
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+            }
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
