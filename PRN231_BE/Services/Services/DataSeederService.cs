@@ -36,9 +36,9 @@ public class DataSeederService : IDataSeederService
         }
     }
 
-
     public async Task SeedAdminUserAsync()
     {
+        var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             var adminEmail = "admin@smokefree.com";
@@ -48,6 +48,7 @@ public class DataSeederService : IDataSeederService
             if (existingAdmin != null)
             {
                 _logger.LogInformation($"Admin user '{adminEmail}' already exists");
+                await transaction.CommitAsync();
                 return;
             }
 
@@ -68,10 +69,12 @@ public class DataSeederService : IDataSeederService
             await _unitOfWork.Users.AddAsync(adminUser);
             await _unitOfWork.SaveAsync();
 
+            await _unitOfWork.CommitTransactionAsync();
             _logger.LogInformation($"Admin user '{adminEmail}' created successfully");
         }
         catch (Exception ex)
         {
+            await _unitOfWork.RollbackTransactionAsync();
             _logger.LogError(ex, "Error creating admin user");
             throw;
         }
@@ -79,96 +82,135 @@ public class DataSeederService : IDataSeederService
 
     public async Task SeedSampleUsersAsync()
     {
+        // Seed Customer User với Transaction
+        await SeedCustomerUserWithTransactionAsync();
+
+        // Seed Coach User với Transaction  
+        await SeedCoachUserWithTransactionAsync();
+    }
+
+    private async Task SeedCustomerUserWithTransactionAsync()
+    {
+        var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
-            // Sample customer user
             var customerEmail = "customer@example.com";
             var existingCustomer = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == customerEmail);
 
-            if (existingCustomer == null)
+            if (existingCustomer != null)
             {
-                var customerUser = new User
-                {
-                    UserName = "customer_demo",
-                    Email = customerEmail,
-                    Phone = "0987654321",
-                    PasswordHash = Helper.HashPassword("Customer@123456"),
-                    Role = UserRole.Customer,
-                    Status = UserStatus.Active,
-                    JoinDate = DateTime.UtcNow,
-                    IsEmailVerified = true,
-                    FailedLoginAttempts = 0
-                };
-
-                await _unitOfWork.Users.AddAsync(customerUser);
-                await _unitOfWork.SaveAsync();
-
-                // Tạo customer profile
-                var customerProfile = new Customer
-                {
-                    Id = customerUser.Id, // One-to-One relationship
-                    FullName = "Sample Customer",
-                    Gender = Gender.Male,
-                    DateOfBirth = new DateTime(1990, 1, 1),
-                    Bio = "Demo customer account for testing purposes",
-                    IsNotificationEnabled = true,
-                    IsDailyReminderEnabled = true,
-                    IsWeeklyReportEnabled = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                await _unitOfWork.Customers.AddAsync(customerProfile);
-                await _unitOfWork.SaveAsync();
-
-                _logger.LogInformation($"Sample customer '{customerEmail}' created successfully");
+                _logger.LogInformation($"Customer user '{customerEmail}' already exists");
+                await _unitOfWork.CommitTransactionAsync();
+                return;
             }
 
-            // Sample coach user  
-            var coachEmail = "coach@smokefree.com";
-            var existingCoach = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == coachEmail);
-
-            if (existingCoach == null)
+            // Tạo User trước
+            var customerUser = new User
             {
-                var coachUser = new User
-                {
-                    UserName = "coach_demo",
-                    Email = coachEmail,
-                    Phone = "0123456788",
-                    PasswordHash = Helper.HashPassword("Coach@123456"),
-                    Role = UserRole.Coach,
-                    Status = UserStatus.Active,
-                    JoinDate = DateTime.UtcNow,
-                    IsEmailVerified = true,
-                    FailedLoginAttempts = 0
-                };
+                UserName = "customer_demo",
+                Email = customerEmail,
+                Phone = "0987654321",
+                PasswordHash = Helper.HashPassword("Customer@123456"),
+                Role = UserRole.Customer,
+                Status = UserStatus.Active,
+                JoinDate = DateTime.UtcNow,
+                IsEmailVerified = true,
+                FailedLoginAttempts = 0
+            };
 
-                await _unitOfWork.Users.AddAsync(coachUser);
-                await _unitOfWork.SaveAsync();
+            await _unitOfWork.Users.AddAsync(customerUser);
+            await _unitOfWork.SaveAsync(); // Save để lấy UserId
 
-                // Tạo coach profile
-                var coachProfile = new Coach
-                {
-                    UserId = coachUser.Id,
-                    FullName = "Dr. Demo Coach",
-                    Bio = "Experienced smoking cessation coach with 10+ years of experience",
-                    Specialization = "Behavioral Therapy, Addiction Treatment",
-                    ExperienceYears = 10,
-                    HourlyRate = 50.00m,
-                    IsAvailable = true,
-                    Rating = 4.8f,
-                    TotalConsultations = 0,
-                    CreatedAt = DateTime.UtcNow
-                };
+            // Tạo Customer profile
+            var customerProfile = new Customer
+            {
+                UserId = customerUser.Id, // Sử dụng UserId từ User vừa tạo
+                FullName = "Sample Customer",
+                Gender = Gender.Male,
+                DateOfBirth = new DateTime(1990, 1, 1),
+                Bio = "Demo customer account for testing purposes",
+                IsNotificationEnabled = true,
+                IsDailyReminderEnabled = true,
+                IsWeeklyReportEnabled = true,
+                CreatedAt = DateTime.UtcNow
+            };
 
-                await _unitOfWork.Coaches.AddAsync(coachProfile);
-                await _unitOfWork.SaveAsync();
+            await _unitOfWork.Customers.AddAsync(customerProfile);
+            await _unitOfWork.SaveAsync(); // Save Customer profile
 
-                _logger.LogInformation($"Sample coach '{coachEmail}' created successfully");
-            }
+            // Commit transaction nếu tất cả thành công
+            await _unitOfWork.CommitTransactionAsync();
+            _logger.LogInformation($"Sample customer '{customerEmail}' and profile created successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating sample users");
+            // Rollback nếu có lỗi
+            await _unitOfWork.RollbackTransactionAsync();
+            _logger.LogError(ex, "Error creating sample customer user and profile");
+            throw;
+        }
+    }
+
+    private async Task SeedCoachUserWithTransactionAsync()
+    {
+        var transaction = await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            var coachEmail = "coach@smokefree.com";
+            var existingCoach = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == coachEmail);
+
+            if (existingCoach != null)
+            {
+                _logger.LogInformation($"Coach user '{coachEmail}' already exists");
+                await _unitOfWork.CommitTransactionAsync();
+                return;
+            }
+
+            // Tạo User trước
+            var coachUser = new User
+            {
+                UserName = "coach_demo",
+                Email = coachEmail,
+                Phone = "0123456788",
+                PasswordHash = Helper.HashPassword("Coach@123456"),
+                Role = UserRole.Coach,
+                Status = UserStatus.Active,
+                JoinDate = DateTime.UtcNow,
+                IsEmailVerified = true,
+                FailedLoginAttempts = 0
+            };
+
+            await _unitOfWork.Users.AddAsync(coachUser);
+            await _unitOfWork.SaveAsync(); // Save để lấy UserId
+
+            // Tạo Coach profile
+            var coachProfile = new Coach
+            {
+                UserId = coachUser.Id, // Sử dụng UserId từ User vừa tạo
+                FullName = "Dr. Demo Coach",
+                Bio = "Experienced smoking cessation coach with 10+ years of experience",
+                Specialization = "Behavioral Therapy, Addiction Treatment",
+                ExperienceYears = 10,
+                Qualifications = "PhD in Psychology, Certified Tobacco Treatment Specialist",
+                HourlyRate = 50.00m,
+                IsAvailable = true,
+                Rating = 4.8f,
+                TotalConsultations = 0,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Coaches.AddAsync(coachProfile);
+            await _unitOfWork.SaveAsync(); // Save Coach profile
+
+            // Commit transaction nếu tất cả thành công
+            await _unitOfWork.CommitTransactionAsync();
+            _logger.LogInformation($"Sample coach '{coachEmail}' and profile created successfully");
+        }
+        catch (Exception ex)
+        {
+            // Rollback nếu có lỗi
+            await _unitOfWork.RollbackTransactionAsync();
+            _logger.LogError(ex, "Error creating sample coach user and profile");
             throw;
         }
     }

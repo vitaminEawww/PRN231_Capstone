@@ -70,7 +70,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
       // One-to-One relationship with User
       entity.HasOne(c => c.User)
                 .WithOne(u => u.Customer)
-                .HasForeignKey<Customer>(c => c.Id)
+                .HasForeignKey<Customer>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
       // One-to-One relationship with CustomerStatistics

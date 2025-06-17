@@ -98,6 +98,8 @@ namespace WebAPI
             builder.Services.AddScoped<IDataSeederService, DataSeederService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ISmokingRecordService, SmokingRecordService>();
+            builder.Services.AddScoped<IPlanService, PlanService>();
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
 
             var app = builder.Build();
 

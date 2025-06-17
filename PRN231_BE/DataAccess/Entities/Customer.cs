@@ -5,6 +5,7 @@ namespace DataAccess.Entities;
 public partial class Customer
 {
     public int Id { get; set; }
+    public int UserId { get; set; }
     public string FullName { get; set; } = null!;
     public Gender Gender { get; set; }
     public DateTime DateOfBirth { get; set; }

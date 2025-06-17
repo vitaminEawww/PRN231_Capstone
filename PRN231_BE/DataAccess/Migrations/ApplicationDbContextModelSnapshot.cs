@@ -272,7 +272,10 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Customer", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(500)
@@ -320,9 +323,15 @@ namespace DataAccess.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MembershipPackageId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Customers");
                 });
@@ -1409,15 +1418,15 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.Customer", b =>
                 {
-                    b.HasOne("DataAccess.Entities.User", "User")
-                        .WithOne("Customer")
-                        .HasForeignKey("DataAccess.Entities.Customer", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("DataAccess.Entities.MembershipPackage", null)
                         .WithMany("Customers")
                         .HasForeignKey("MembershipPackageId");
+
+                    b.HasOne("DataAccess.Entities.User", "User")
+                        .WithOne("Customer")
+                        .HasForeignKey("DataAccess.Entities.Customer", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

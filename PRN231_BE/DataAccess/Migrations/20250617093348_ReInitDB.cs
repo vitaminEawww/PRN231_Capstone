@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class InitDatabase : Migration
+    public partial class ReInitDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -83,7 +83,15 @@ namespace DataAccess.Migrations
                     PasswordHash = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    JoinDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    JoinDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EmailVerificationToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmailVerifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsEmailVerified = table.Column<bool>(type: "bit", nullable: false),
+                    PasswordResetToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PasswordResetTokenExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    FailedLoginAttempts = table.Column<int>(type: "int", nullable: false),
+                    LockedUntil = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -123,8 +131,6 @@ namespace DataAccess.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     AvatarUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Bio = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     Specialization = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
@@ -158,7 +164,9 @@ namespace DataAccess.Migrations
                 name: "Customers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Gender = table.Column<int>(type: "int", nullable: false),
                     DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -181,8 +189,8 @@ namespace DataAccess.Migrations
                         principalTable: "MembershipPackages",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Customers_Users_Id",
-                        column: x => x.Id,
+                        name: "FK_Customers_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -790,6 +798,12 @@ namespace DataAccess.Migrations
                 column: "MembershipPackageId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Customers_UserId",
+                table: "Customers",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomerStatistics_CurrentStreak",
                 table: "CustomerStatistics",
                 column: "CurrentStreak");
@@ -1018,6 +1032,12 @@ namespace DataAccess.Migrations
                 name: "IX_RatingSummaries_TargetType_TargetId",
                 table: "RatingSummaries",
                 columns: new[] { "TargetType", "TargetId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SmokingRecords_CustomerId",
+                table: "SmokingRecords",
+                column: "CustomerId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
