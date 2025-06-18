@@ -149,5 +149,46 @@ namespace WebAPI.Controllers
             return Ok(response.Result); 
         }
 
+
+
+        /// <summary>
+        /// Nâng cấp gói membership cho người dùng
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="newPackageId"></param>
+        /// <returns></returns>
+        [HttpPost("upgrade")]
+        public async Task<IActionResult> UpgradePackage(int userId, int newPackageId)
+        {
+            var response = await _membershipPackageService.UpgradePackageAsync(userId, newPackageId);
+            if (!response.IsSuccess)
+            {
+                return StatusCode((int)response.StatusCode, response);
+            }
+
+            return StatusCode((int)HttpStatusCode.OK, response.Result);
+        }
+
+
+        /// <summary>
+        /// Mở rộng gói membership cho người dùng bằng cách thêm ngày
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="additionalDays"></param>
+        /// <returns></returns>
+        [HttpPost("extend")]
+        public async Task<IActionResult> ExtendPackage(int userId, int additionalDays)
+        {
+            var response = await _membershipPackageService.ExtendPackageAsync(userId, additionalDays);
+            if (!response.IsSuccess)
+            {
+                return StatusCode((int)response.StatusCode, response);
+            }
+
+            return StatusCode((int)HttpStatusCode.OK, response.Result);
+        }
+
+
+
     }
 }

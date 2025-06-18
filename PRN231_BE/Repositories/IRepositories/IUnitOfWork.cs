@@ -26,6 +26,8 @@ namespace Repositories.IRepositories
         IGenericRepository<CustomerStatistics> CustomerStatistics { get; }
         IGenericRepository<SystemReport> SystemReports { get; }
         IGenericRepository<Rating> Ratings { get; }
+
+        IGenericRepository<MemberShipUsage> MemberShipUsages { get; }
         Task<int> SaveAsync();
         Task<IDbContextTransaction> BeginTransactionAsync();
         Task CommitTransactionAsync();

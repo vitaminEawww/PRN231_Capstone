@@ -1,9 +1,13 @@
 ﻿using DataAccess.Common;
 using DataAccess.Entities;
+using DataAccess.Enums;
 using DataAccess.Models.MembershipPackage;
 using DataAccess.Models.MemberShipPackage;
+using DataAccess.Models.MemberShipUsage;
+using DataAccess.Models.Payment;
 using Mapster;
 using MapsterMapper;
+using Microsoft.AspNetCore.Http;
 using Repositories.IRepositories;
 using Services.IServices;
 using System.Net;
@@ -15,11 +19,13 @@ public class MembershipPackageService : IMembershipPackageService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IVnPayService _vnPayService;
 
-    public MembershipPackageService( IUnitOfWork unitOfWork, IMapper mapper)
+    public MembershipPackageService( IUnitOfWork unitOfWork, IMapper mapper, IVnPayService vnPayService)
     {
         _mapper = mapper;
         _unitOfWork = unitOfWork;
+        _vnPayService = vnPayService;
     }
     public async Task<ApiResponse> GetAllMembershipPackagesAsync()
     {
@@ -212,6 +218,100 @@ public class MembershipPackageService : IMembershipPackageService
                 Result = "Package deleted successfully"
             };
         }   
+        catch (Exception ex)
+        {
+            return new ApiResponse
+            {
+                IsSuccess = false,
+                StatusCode = HttpStatusCode.InternalServerError,
+                ErrorMessages = new List<string> { ex.Message }
+            };
+        }
+    }
+
+    public async Task<ApiResponse> UpgradePackageAsync(int userId, int newMemberShipPackageId)
+    {
+        try
+        {
+            var membershipUsage = await _unitOfWork.MemberShipUsages
+                                                .FirstOrDefaultAsync(m => m.CustomerId == userId && m.Status == PackageStatus.Active);
+
+            if (membershipUsage == null)
+            {
+                return new ApiResponse
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    ErrorMessages = new List<string> { "No active membership found for this user." }
+                };
+            }
+
+            var newPackage = await _unitOfWork.MembershipPackages.GetByIdAsync(newMemberShipPackageId);
+            if (newPackage == null)
+            {
+                return new ApiResponse
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    ErrorMessages = new List<string> { "New membership package not found." }
+                };
+            }
+
+            membershipUsage.MembershipPackageId = newMemberShipPackageId;
+            membershipUsage.StartDate = DateTime.UtcNow;
+            membershipUsage.EndDate = DateTime.UtcNow.AddDays(newPackage.DurationInDays); // Gia hạn theo gói mới
+
+            _unitOfWork.MemberShipUsages.Update(membershipUsage);
+            await _unitOfWork.SaveAsync();
+
+            return new ApiResponse
+            {
+                IsSuccess = true,
+                StatusCode = HttpStatusCode.OK,
+                Result = membershipUsage.Adapt<MemberShipUsageDTO>()
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse
+            {
+                IsSuccess = false,
+                StatusCode = HttpStatusCode.InternalServerError,
+                ErrorMessages = new List<string> { ex.Message }
+            };
+        }
+    }
+
+    public async Task<ApiResponse> ExtendPackageAsync(int userId, int additionalDays)
+    {
+        try
+        {
+            var membershipUsage = await _unitOfWork.MemberShipUsages
+                                                    .FirstOrDefaultAsync(m => m.CustomerId == userId && m.Status == PackageStatus.Active);
+
+            if (membershipUsage == null)
+            {
+                return new ApiResponse
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    ErrorMessages = new List<string> { "No active membership found for this user." }
+                };
+            }
+
+            // Gia hạn thời gian sử dụng gói
+            membershipUsage.EndDate = membershipUsage.EndDate.AddDays(additionalDays);
+
+            _unitOfWork.MemberShipUsages.Update(membershipUsage);
+            await _unitOfWork.SaveAsync();
+
+            return new ApiResponse
+            {
+                IsSuccess = true,
+                StatusCode = HttpStatusCode.OK,
+                Result = membershipUsage.Adapt<MemberShipUsageDTO>()
+            };
+        }
         catch (Exception ex)
         {
             return new ApiResponse
