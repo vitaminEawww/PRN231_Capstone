@@ -27,8 +27,6 @@ public class QuitPlanCreateDTO
     /// </summary>
     public bool AutoGeneratePhases { get; set; } = true;
 
-    public int? SmokingRecordId { get; set; }
-
     /// <summary>
     /// Danh sách các giai đoạn tùy chỉnh (nếu AutoGeneratePhases = false)
     /// </summary>

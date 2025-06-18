@@ -9,9 +9,9 @@ using Microsoft.OpenApi.Models;
 using Repositories.IRepositories;
 using Repositories.Repository;
 using Services.IServices;
-using System.Text;
+using Services.Interfaces;
 using Services.Services;
-
+using System.Text;
 
 namespace WebAPI
 {
@@ -100,6 +100,9 @@ namespace WebAPI
             builder.Services.AddScoped<ISmokingRecordService, SmokingRecordService>();
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<ICustomerService, CustomerService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddScoped<IFirebaseService, FirebaseService>();
+            builder.Services.AddHostedService<NotificationBackgroundService>();
 
             var app = builder.Build();
 
@@ -123,11 +126,8 @@ namespace WebAPI
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-                    c.RoutePrefix = "";
-                });
+                app.UseSwaggerUI();
+
             }
 
             app.UseHttpsRedirection();

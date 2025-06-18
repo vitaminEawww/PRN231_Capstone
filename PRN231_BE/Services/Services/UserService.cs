@@ -62,7 +62,7 @@ public class UserService(IUnitOfWork unitOfWork, JwtTokenService jwtTokenService
                 response.ErrorMessages.Add("User không tồn tại.");
                 return response;
             }
-            
+
             user.Status = UserStatus.Deleted;
 
             _unitOfWork.Users.Update(user);
