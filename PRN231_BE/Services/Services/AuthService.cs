@@ -331,7 +331,7 @@ namespace Services.Services
         {
             var customer = new Customer
             {
-                Id = user.Id,
+                UserId = user.Id,
                 FullName = request.FullName,
                 Gender = request.Gender!.Value,
                 DateOfBirth = request.DateOfBirth,
