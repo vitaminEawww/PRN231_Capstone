@@ -11,6 +11,7 @@ using Repositories.Repository;
 using Services.IServices;
 using System.Text;
 using Services.Services;
+using MapsterMapper;
 
 
 namespace WebAPI
@@ -22,7 +23,7 @@ namespace WebAPI
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-
+            builder.Services.AddSwaggerGen();
             //*<=====Set up policy=====>
             builder.Services.AddCors(opts =>
             {
@@ -92,26 +93,29 @@ namespace WebAPI
 
 
             MappingRegistration.RegisterMappings();
+            builder.Services.AddSingleton<IMapper, Mapper>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtTokenService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IVnPayService, VnPayService>();
+            builder.Services.AddScoped<IMembershipPackageService, MembershipPackageService>();
+            builder.Services.AddScoped<IMembershipUsage, MembershipUsageService>();
+            builder.Services.AddScoped<IConsultationService, ConsultationService>();
+            builder.Services.AddScoped<ICoachService, CoachService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-                    c.RoutePrefix = "";
-                });
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            app.UseCors("corspolicy");
+            //app.UseStaticFiles();
+            //app.UseCors("corspolicy");
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();

@@ -10,6 +10,7 @@ namespace DataAccess.MappingConfigs
             TypeAdapterConfig.GlobalSettings.Scan(typeof(MembershipPackageMappingConfig).Assembly);
             TypeAdapterConfig.GlobalSettings.Scan(typeof(MemberShipUsageMappingConfig).Assembly);
             TypeAdapterConfig.GlobalSettings.Scan(typeof(PaymentMappingConfig).Assembly);
+            TypeAdapterConfig.GlobalSettings.Scan(typeof(ConsulationsMappingConfig).Assembly);
         }
     }
 }
