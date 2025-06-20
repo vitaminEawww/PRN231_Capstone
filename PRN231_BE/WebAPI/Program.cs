@@ -11,6 +11,7 @@ using Repositories.Repository;
 using Services.IServices;
 using System.Text;
 using Services.Services;
+using Services.BackgroundServices;
 
 
 namespace WebAPI
@@ -100,6 +101,15 @@ namespace WebAPI
             builder.Services.AddScoped<ISmokingRecordService, SmokingRecordService>();
             builder.Services.AddScoped<IPlanService, PlanService>();
             builder.Services.AddScoped<ICustomerService, CustomerService>();
+            builder.Services.AddScoped<IDailyProgressService, DailyProgressService>();
+            builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+            builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+
+            // Đăng ký Background Services
+            builder.Services.AddHostedService<StatisticsUpdateBackgroundService>();
+            builder.Services.AddHostedService<LeaderboardUpdateBackgroundService>();
+            builder.Services.AddHostedService<NotificationBackgroundService>();
 
             var app = builder.Build();
 
