@@ -95,6 +95,7 @@ namespace WebAPI
             MappingRegistration.RegisterMappings();
             builder.Services.AddSingleton<IMapper, Mapper>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddSignalR();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtTokenService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -103,6 +104,7 @@ namespace WebAPI
             builder.Services.AddScoped<IMembershipUsage, MembershipUsageService>();
             builder.Services.AddScoped<IConsultationService, ConsultationService>();
             builder.Services.AddScoped<ICoachService, CoachService>();
+            builder.Services.AddScoped<IConversationService, ConversationService>();
 
             var app = builder.Build();
 
@@ -112,10 +114,10 @@ namespace WebAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.MapHub<WebAPI.Hubs.ChatHub>("/chathub");
             app.UseHttpsRedirection();
-            //app.UseStaticFiles();
-            //app.UseCors("corspolicy");
+            app.UseStaticFiles();
+            app.UseCors("corspolicy");
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();

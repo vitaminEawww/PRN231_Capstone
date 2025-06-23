@@ -14,7 +14,6 @@ using Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using DataAccess.Data;
 using System.Reflection;
 using System.Web;
 
@@ -26,13 +25,11 @@ namespace WebAPI.Controllers
     {
         private readonly IVnPayService _vnPayService;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ApplicationDbContext _context;
 
-        public PaymentController(IVnPayService vnPayService, IUnitOfWork unitOfWork, ApplicationDbContext context)
+        public PaymentController(IVnPayService vnPayService, IUnitOfWork unitOfWork)
         {
             _vnPayService = vnPayService;
             _unitOfWork = unitOfWork;
-            _context = context;
         }
 
         // API tạo URL thanh toán VNPAY
@@ -64,7 +61,7 @@ namespace WebAPI.Controllers
                 // Tạo thông tin thanh toán
                 var paymentInfo = new PaymentInformationModel
                 {
-                    OrderId = new Random().Next(100000, 999999),  // Tạo OrderId ngẫu nhiên
+                    OrderId = Guid.NewGuid().ToString(),  // Tạo OrderId ngẫu nhiên và chuyển thành string
                     Amount = (int)package.Price,  // Lấy giá tiền từ gói
                     OrderDescription = package.Name,
                     OrderType = "MembershipPackage",  // Loại đơn hàng là gói dịch vụ
@@ -121,91 +118,71 @@ namespace WebAPI.Controllers
                 // Kiểm tra kết quả thanh toán
                 if (response.Success && response.VnPayResponseCode == "00")
                 {
-                    using (var transaction = await _context.Database.BeginTransactionAsync())
+                    // Tìm payment theo TransactionId sử dụng IUnitOfWork
+                    var payment = await _unitOfWork.Payments.FirstOrDefaultAsync(p => p.TransactionId == response.TransactionId);
+
+                    if (payment != null)
                     {
-                        try
+                        // Nếu thanh toán đã hoàn thành rồi, tránh xử lý lại
+                        if (payment.Status == PaymentStatus.Completed)
                         {
-                            // Tìm payment theo TransactionId
-                            var payment = await _context.Payments
-                                .FirstOrDefaultAsync(p => p.TransactionId == response.TransactionId);
-
-                            if (payment != null)
+                            return Ok(new ApiResponse
                             {
-                                // Nếu thanh toán đã hoàn thành rồi, tránh xử lý lại
-                                if (payment.Status == PaymentStatus.Completed)
-                                {
-                                    return Ok(new ApiResponse
-                                    {
-                                        IsSuccess = true,
-                                        StatusCode = HttpStatusCode.OK,
-                                        Result = "Payment already processed."
-                                    });
-                                }
-
-                                // Cập nhật trạng thái thanh toán
-                                payment.Status = PaymentStatus.Completed;
-                                payment.PaymentDate = DateTime.UtcNow;
-
-                                // Lưu thông tin payment đã cập nhật
-                                await _context.SaveChangesAsync();
-
-                                // Cập nhật thông tin người dùng (Customer)
-                                var customer = await _context.Customers
-                                    .FirstOrDefaultAsync(c => c.Id == payment.CustomerId);
-
-                                // Kiểm tra người dùng đã có usage active chưa
-                                var existingUsage = await _context.MemberShipUsages
-                                    .FirstOrDefaultAsync(u => u.CustomerId == payment.CustomerId && u.Status == PackageStatus.Active);
-
-                                if (existingUsage == null)
-                                {
-                                    // Tạo mới MemberShipUsage
-                                    var package = await _context.MembershipPackages
-                                        .FirstOrDefaultAsync(p => p.Id == payment.MembershipPackageId);
-
-                                    if (package != null)
-                                    {
-                                        var duration = package.DurationInDays; // Sử dụng gói dịch vụ này bao lâu
-
-                                        var userUsage = new MemberShipUsage
-                                        {
-                                            CustomerId = payment.CustomerId,
-                                            MembershipPackageId = payment.MembershipPackageId.Value,
-                                            StartDate = DateTime.UtcNow,
-                                            EndDate = DateTime.UtcNow.AddDays(duration),
-                                            Status = PackageStatus.Active
-                                        };
-
-                                        // Thêm MemberShipUsage mới
-                                        await _context.MemberShipUsages.AddAsync(userUsage);
-                                    }
-                                }
-                               
-                                // Commit transaction
-                                await transaction.CommitAsync();
-
-                                return Ok(new ApiResponse
-                                {
-                                    IsSuccess = true,
-                                    StatusCode = HttpStatusCode.OK,
-                                    Result = "Payment successfully processed"
-                                });
-                            }
-                            else
-                            {
-                                return BadRequest("Payment not found.");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            await transaction.RollbackAsync();
-                            return StatusCode(500, new ApiResponse
-                            {
-                                IsSuccess = false,
-                                StatusCode = HttpStatusCode.InternalServerError,
-                                ErrorMessages = new List<string> { "Internal server error" }
+                                IsSuccess = true,
+                                StatusCode = HttpStatusCode.OK,
+                                Result = "Payment already processed."
                             });
                         }
+
+                        // Cập nhật trạng thái thanh toán
+                        payment.Status = PaymentStatus.Completed;
+                        payment.PaymentDate = DateTime.UtcNow;
+
+                        // Kiểm tra người dùng đã có usage active chưa
+                        var existingUsage = await _unitOfWork.MemberShipUsages.FirstOrDefaultAsync(
+                            u => u.CustomerId == payment.CustomerId && u.Status == PackageStatus.Active);
+
+                        if (existingUsage == null)
+                        {
+                            // Tạo mới MemberShipUsage
+                            var package = await _unitOfWork.MembershipPackages.GetByIdAsync(payment.MembershipPackageId.Value);
+
+                            if (package != null)
+                            {
+                                var duration = package.DurationInDays; // Sử dụng gói dịch vụ này bao lâu
+
+                                var userUsage = new MemberShipUsage
+                                {
+                                    CustomerId = payment.CustomerId,
+                                    MembershipPackageId = payment.MembershipPackageId.Value,
+                                    StartDate = DateTime.UtcNow,
+                                    EndDate = DateTime.UtcNow.AddDays(duration),
+                                    Status = PackageStatus.Active
+                                };
+
+                                // Thêm MemberShipUsage mới
+                                await _unitOfWork.MemberShipUsages.AddAsync(userUsage);
+                            }
+                        }
+
+                        // Lưu tất cả thay đổi
+                        await _unitOfWork.SaveAsync();
+
+                        return Ok(new ApiResponse
+                        {
+                            IsSuccess = true,
+                            StatusCode = HttpStatusCode.OK,
+                            Result = "Payment successfully processed"
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new ApiResponse
+                        {
+                            IsSuccess = false,
+                            StatusCode = HttpStatusCode.BadRequest,
+                            ErrorMessages = new List<string> { "Payment not found." }
+                        });
                     }
                 }
                 else
@@ -224,11 +201,10 @@ namespace WebAPI.Controllers
                 {
                     IsSuccess = false,
                     StatusCode = HttpStatusCode.InternalServerError,
-                    ErrorMessages = new List<string> { "Internal Server Error" }
+                    ErrorMessages = new List<string> { ex.Message }
                 });
             }
         }
-
 
         [HttpGet("vn-pay-return")]
         public async Task<IActionResult> VnPayReturn()
@@ -237,54 +213,47 @@ namespace WebAPI.Controllers
 
             if (response.Success && response.VnPayResponseCode == "00")
             {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
+                try
                 {
-                    try
+                    var payment = await _unitOfWork.Payments.FirstOrDefaultAsync(p => p.TransactionId == response.TransactionId);
+
+                    if (payment == null)
+                        return Content("Không tìm thấy giao dịch thanh toán!");
+
+                    if (payment.Status != PaymentStatus.Completed)
                     {
-                        var payment = await _context.Payments
-                            .FirstOrDefaultAsync(p => p.TransactionId == response.TransactionId);
+                        payment.Status = PaymentStatus.Completed;
+                        payment.PaymentDate = DateTime.UtcNow;
 
-                        if (payment == null)
-                            return Content("Không tìm thấy giao dịch thanh toán!");
+                        var existingUsage = await _unitOfWork.MemberShipUsages.FirstOrDefaultAsync(
+                            u => u.CustomerId == payment.CustomerId && u.Status == PackageStatus.Active);
 
-                        if (payment.Status != PaymentStatus.Completed)
+                        if (existingUsage == null)
                         {
-                            payment.Status = PaymentStatus.Completed;
-                            payment.PaymentDate = DateTime.UtcNow;
-                            await _context.SaveChangesAsync();
-
-                            var existingUsage = await _context.MemberShipUsages
-                                .FirstOrDefaultAsync(u => u.CustomerId == payment.CustomerId && u.Status == PackageStatus.Active);
-
-                            if (existingUsage == null)
+                            var package = await _unitOfWork.MembershipPackages.GetByIdAsync(payment.MembershipPackageId.Value);
+                            if (package != null)
                             {
-                                var package = await _context.MembershipPackages
-                                    .FirstOrDefaultAsync(p => p.Id == payment.MembershipPackageId);
-                                if (package != null)
+                                var duration = package.DurationInDays;
+                                var userUsage = new MemberShipUsage
                                 {
-                                    var duration = package.DurationInDays;
-                                    var userUsage = new MemberShipUsage
-                                    {
-                                        CustomerId = payment.CustomerId,
-                                        MembershipPackageId = payment.MembershipPackageId.Value,
-                                        StartDate = DateTime.UtcNow,
-                                        EndDate = DateTime.UtcNow.AddDays(duration),
-                                        Status = PackageStatus.Active
-                                    };
-                                    await _context.MemberShipUsages.AddAsync(userUsage);
-                                    await _context.SaveChangesAsync();
-                                }
+                                    CustomerId = payment.CustomerId,
+                                    MembershipPackageId = payment.MembershipPackageId.Value,
+                                    StartDate = DateTime.UtcNow,
+                                    EndDate = DateTime.UtcNow.AddDays(duration),
+                                    Status = PackageStatus.Active
+                                };
+                                await _unitOfWork.MemberShipUsages.AddAsync(userUsage);
                             }
                         }
 
-                        await transaction.CommitAsync();
-                        return Content("Thanh toán thành công! Cảm ơn bạn đã sử dụng dịch vụ.");
+                        await _unitOfWork.SaveAsync();
                     }
-                    catch (Exception ex)
-                    {
-                        await transaction.RollbackAsync();
-                        return Content($"Có lỗi xảy ra khi xử lý thanh toán: {ex.Message}");
-                    }
+
+                    return Content("Thanh toán thành công! Cảm ơn bạn đã sử dụng dịch vụ.");
+                }
+                catch (Exception ex)
+                {
+                    return Content($"Có lỗi xảy ra khi xử lý thanh toán: {ex.Message}");
                 }
             }
             else

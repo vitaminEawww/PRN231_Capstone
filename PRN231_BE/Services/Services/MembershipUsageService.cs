@@ -66,5 +66,64 @@ namespace Services.Services
                 };
             }
         }
+
+        public async Task<ApiResponse> GetMyMembershipStatusAsync(int customerId)
+        {
+            try
+            {
+                // Tìm membership usage active
+                var activeMembership = await _unitOfWork.MemberShipUsages
+                    .AsQueryable()
+                    .Include(m => m.MembershipPackage)
+                    .FirstOrDefaultAsync(m => m.CustomerId == customerId && m.Status == DataAccess.Enums.PackageStatus.Active);
+
+                if (activeMembership == null)
+                {
+                    return new ApiResponse
+                    {
+                        IsSuccess = true,
+                        StatusCode = HttpStatusCode.OK,
+                        ErrorMessages = new List<string>(),
+                        Result = new
+                        {
+                            HasActiveMembership = false,
+                            Message = "No active membership found"
+                        }
+                    };
+                }
+
+                var daysRemaining = (activeMembership.EndDate - DateTime.UtcNow).Days;
+                var isExpired = DateTime.UtcNow > activeMembership.EndDate;
+
+                return new ApiResponse
+                {
+                    IsSuccess = true,
+                    StatusCode = HttpStatusCode.OK,
+                    ErrorMessages = new List<string>(),
+                    Result = new
+                    {
+                        HasActiveMembership = true,
+                        Membership = new
+                        {
+                            PackageName = activeMembership.MembershipPackage?.Name,
+                            PackageDescription = activeMembership.MembershipPackage?.Description,
+                            StartDate = activeMembership.StartDate,
+                            EndDate = activeMembership.EndDate,
+                            DaysRemaining = daysRemaining,
+                            IsExpired = isExpired
+                        }
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    ErrorMessages = new List<string> { ex.Message }
+                };
+            }
+        }
     }
 }

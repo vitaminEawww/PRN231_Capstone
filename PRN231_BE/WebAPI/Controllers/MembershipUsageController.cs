@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Services.IServices;
 using Services.Services;
-
+using System.Net;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using DataAccess.Common;
 
 namespace WebAPI.Controllers
 {
@@ -12,7 +15,7 @@ namespace WebAPI.Controllers
     {
         private readonly IMembershipUsage _membershipUsage;
 
-        public MembershipUsageController( IMembershipUsage membershipUsage )
+        public MembershipUsageController(IMembershipUsage membershipUsage)
         {
             _membershipUsage = membershipUsage;
         }
@@ -28,6 +31,33 @@ namespace WebAPI.Controllers
             }
 
             return Ok(response.Result); 
+        }
+
+        // API kiểm tra trạng thái membership hiện tại của user
+        [Authorize]
+        [HttpGet("my-membership")]
+        public async Task<IActionResult> GetMyMembershipStatus()
+        {
+            // Lấy customerId từ JWT claims
+            var customerId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (customerId == 0)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "CustomerId is missing in claims." }
+                });
+            }
+
+            var response = await _membershipUsage.GetMyMembershipStatusAsync(customerId);
+
+            if (!response.IsSuccess)
+            {
+                return StatusCode((int)response.StatusCode, response);
+            }
+
+            return Ok(response.Result);
         }
     }
 }

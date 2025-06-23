@@ -13,5 +13,5 @@ public class PaymentInformationModel
     public string OrderDescription { get; set; }
     public string Name { get; set; }
 
-    public int OrderId { get; set; }
+    public string OrderId { get; set; }
 }

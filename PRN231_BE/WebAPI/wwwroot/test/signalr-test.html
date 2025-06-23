@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SignalR Chat Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+  </head>
+  <body>
+    <h2>SignalR Chat Test</h2>
+    <input
+      id="conversationId"
+      placeholder="ConversationId"
+      oninput="joinConversation()"
+    />
+    <input id="sender" placeholder="Sender" />
+    <input id="message" placeholder="Message" />
+    <button onclick="sendMessage()">Send</button>
+    <ul id="messagesList"></ul>
+    <script>
+      const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chathub") // Đúng endpoint backend của bạn
+        .build();
+
+      connection.on("ReceiveMessage", (sender, message) => {
+        const li = document.createElement("li");
+        li.textContent = `${sender}: ${message}`;
+        document.getElementById("messagesList").appendChild(li);
+      });
+
+      async function joinConversation() {
+        const conversationId = document.getElementById("conversationId").value;
+        if (conversationId) {
+          await connection.invoke("JoinConversation", conversationId);
+        }
+      }
+
+      async function start() {
+        await connection.start();
+        console.log("Connected to SignalR hub");
+        // Tự động join nếu đã nhập conversationId
+        const conversationId = document.getElementById("conversationId").value;
+        if (conversationId) {
+          await joinConversation();
+        }
+      }
+
+      async function sendMessage() {
+        const conversationId = document.getElementById("conversationId").value;
+        const sender = document.getElementById("sender").value;
+        const message = document.getElementById("message").value;
+        await connection.invoke(
+          "SendMessageToConversation",
+          conversationId,
+          sender,
+          message
+        );
+      }
+
+      start();
+    </script>
+  </body>
+</html>
