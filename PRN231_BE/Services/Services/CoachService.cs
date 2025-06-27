@@ -26,20 +26,19 @@ public class CoachService : ICoachService
         return coach?.Adapt<CoachDTO>();
     }
 
-    public async Task<CoachDTO?> GetCoachProfileAsync(int coachId)
+    public async Task<CoachDTO?> GetCoachProfileAsync(int userId)
     {
-        return await GetCoachByIdAsync(coachId);
+        var coach = await _unitOfWork.Coaches.FirstOrDefaultAsync(c => c.UserId == userId, c => c.User);
+        return coach?.Adapt<CoachDTO>();
     }
 
-    public async Task<CoachDTO> UpdateCoachProfileAsync(int coachId, UpdateCoachProfileDTO dto)
+    public async Task<CoachDTO> UpdateCoachProfileAsync(int userId, UpdateCoachProfileDTO dto)
     {
-        var coach = await _unitOfWork.Coaches.GetByIdAsync(coachId);
+        var coach = await _unitOfWork.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
         if (coach == null)
             throw new Exception("Coach không tồn tại");
 
-        // Cập nhật thông tin
         if (dto.FullName != null) coach.FullName = dto.FullName;
-        if (dto.Phone != null) coach.Phone = dto.Phone;
         if (dto.AvatarUrl != null) coach.AvatarUrl = dto.AvatarUrl;
         if (dto.Bio != null) coach.Bio = dto.Bio;
         if (dto.Specialization != null) coach.Specialization = dto.Specialization;
@@ -53,12 +52,16 @@ public class CoachService : ICoachService
         _unitOfWork.Coaches.Update(coach);
         await _unitOfWork.SaveAsync();
 
-        return await GetCoachByIdAsync(coachId) ?? throw new Exception("Không thể lấy thông tin coach sau khi cập nhật");
+        return await GetCoachByIdAsync(coach.Id) ?? throw new Exception("Không thể lấy thông tin coach sau khi cập nhật");
     }
 
-    public async Task<List<ConsultationDTO>> GetCoachConsultationsAsync(int coachId, ConsultationStatus? status = null)
+    public async Task<List<ConsultationDTO>> GetCoachConsultationsAsync(int userId, ConsultationStatus? status = null)
     {
-        var consultations = await _unitOfWork.Consultations.GetAllAsync(c => c.CoachId == coachId);
+        var coach = await _unitOfWork.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (coach == null)
+            return new List<ConsultationDTO>();
+
+        var consultations = await _unitOfWork.Consultations.GetAllAsync(c => c.CoachId == coach.Id);
 
         if (status.HasValue)
         {
@@ -69,15 +72,23 @@ public class CoachService : ICoachService
         return orderedConsultations.Adapt<List<ConsultationDTO>>();
     }
 
-    public async Task<ConsultationDTO?> GetCoachConsultationByIdAsync(int coachId, int consultationId)
+    public async Task<ConsultationDTO?> GetCoachConsultationByIdAsync(int userId, int consultationId)
     {
-        var consultation = await _unitOfWork.Consultations.FirstOrDefaultAsync(c => c.CoachId == coachId && c.Id == consultationId);
+        var coach = await _unitOfWork.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (coach == null)
+            return null;
+
+        var consultation = await _unitOfWork.Consultations.FirstOrDefaultAsync(c => c.CoachId == coach.Id && c.Id == consultationId);
         return consultation?.Adapt<ConsultationDTO>();
     }
 
-    public async Task<bool> UpdateConsultationStatusAsync(int coachId, int consultationId, UpdateConsultationStatusDTO dto)
+    public async Task<bool> UpdateConsultationStatusAsync(int userId, int consultationId, UpdateConsultationStatusDTO dto)
     {
-        var consultation = await _unitOfWork.Consultations.FirstOrDefaultAsync(c => c.CoachId == coachId && c.Id == consultationId);
+        var coach = await _unitOfWork.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (coach == null)
+            throw new Exception("Coach không tồn tại");
+
+        var consultation = await _unitOfWork.Consultations.FirstOrDefaultAsync(c => c.CoachId == coach.Id && c.Id == consultationId);
 
         if (consultation == null)
             throw new Exception("Buổi tư vấn không tồn tại");

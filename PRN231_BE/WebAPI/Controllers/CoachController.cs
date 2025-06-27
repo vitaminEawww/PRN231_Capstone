@@ -86,18 +86,18 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var coachId = await GetCurrentCoachIdAsync();
-                if (coachId == null)
+                var userId = GetCurrentUserId();
+                if (userId == null)
                 {
                     return Unauthorized(new ApiResponse
                     {
                         StatusCode = HttpStatusCode.Unauthorized,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { "User is not authenticated or not a coach." }
+                        ErrorMessages = new List<string> { "User is not authenticated." }
                     });
                 }
 
-                var result = await _coachService.GetCoachProfileAsync(coachId.Value);
+                var result = await _coachService.GetCoachProfileAsync(userId.Value);
                 if (result == null)
                 {
                     return NotFound(new ApiResponse
@@ -129,18 +129,18 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var coachId = await GetCurrentCoachIdAsync();
-                if (coachId == null)
+                var userId = GetCurrentUserId();
+                if (userId == null)
                 {
                     return Unauthorized(new ApiResponse
                     {
                         StatusCode = HttpStatusCode.Unauthorized,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { "User is not authenticated or not a coach." }
+                        ErrorMessages = new List<string> { "User is not authenticated." }
                     });
                 }
 
-                var result = await _coachService.UpdateCoachProfileAsync(coachId.Value, dto);
+                var result = await _coachService.UpdateCoachProfileAsync(userId.Value, dto);
                 return Ok(new ApiResponse
                 {
                     IsSuccess = true,
@@ -163,18 +163,18 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var coachId = await GetCurrentCoachIdAsync();
-                if (coachId == null)
+                var userId = GetCurrentUserId();
+                if (userId == null)
                 {
                     return Unauthorized(new ApiResponse
                     {
                         StatusCode = HttpStatusCode.Unauthorized,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { "User is not authenticated or not a coach." }
+                        ErrorMessages = new List<string> { "User is not authenticated." }
                     });
                 }
 
-                var result = await _coachService.GetCoachConsultationsAsync(coachId.Value, status);
+                var result = await _coachService.GetCoachConsultationsAsync(userId.Value, status);
                 return Ok(new ApiResponse
                 {
                     IsSuccess = true,
@@ -197,18 +197,18 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var coachId = await GetCurrentCoachIdAsync();
-                if (coachId == null)
+                var userId = GetCurrentUserId();
+                if (userId == null)
                 {
                     return Unauthorized(new ApiResponse
                     {
                         StatusCode = HttpStatusCode.Unauthorized,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { "User is not authenticated or not a coach." }
+                        ErrorMessages = new List<string> { "User is not authenticated." }
                     });
                 }
 
-                var result = await _coachService.GetCoachConsultationByIdAsync(coachId.Value, id);
+                var result = await _coachService.GetCoachConsultationByIdAsync(userId.Value, id);
                 if (result == null)
                 {
                     return NotFound(new ApiResponse
@@ -240,18 +240,18 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var coachId = await GetCurrentCoachIdAsync();
-                if (coachId == null)
+                var userId = GetCurrentUserId();
+                if (userId == null)
                 {
                     return Unauthorized(new ApiResponse
                     {
                         StatusCode = HttpStatusCode.Unauthorized,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { "User is not authenticated or not a coach." }
+                        ErrorMessages = new List<string> { "User is not authenticated." }
                     });
                 }
 
-                var result = await _coachService.UpdateConsultationStatusAsync(coachId.Value, id, dto);
+                var result = await _coachService.UpdateConsultationStatusAsync(userId.Value, id, dto);
                 return Ok(new ApiResponse
                 {
                     IsSuccess = true,
@@ -268,14 +268,13 @@ namespace WebAPI.Controllers
             }
         }
 
-        // Helper: Lấy CoachId từ UserId trong token
-        private async Task<int?> GetCurrentCoachIdAsync()
+        // Helper: Lấy UserId từ token
+        private int? GetCurrentUserId()
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdStr == null) return null;
             if (!int.TryParse(userIdStr, out int userId)) return null;
-            var coach = await _unitOfWork.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
-            return coach?.Id;
+            return userId;
         }
     }
 } 

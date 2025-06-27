@@ -6,6 +6,7 @@ using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using DataAccess.Common;
+using Repositories.IRepositories;
 
 namespace WebAPI.Controllers
 {
@@ -14,10 +15,12 @@ namespace WebAPI.Controllers
     public class MembershipUsageController : ControllerBase
     {
         private readonly IMembershipUsage _membershipUsage;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public MembershipUsageController(IMembershipUsage membershipUsage)
+        public MembershipUsageController(IMembershipUsage membershipUsage, IUnitOfWork unitOfWork)
         {
             _membershipUsage = membershipUsage;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet("usage/{userId}")]
@@ -38,19 +41,31 @@ namespace WebAPI.Controllers
         [HttpGet("my-membership")]
         public async Task<IActionResult> GetMyMembershipStatus()
         {
-            // Lấy customerId từ JWT claims
-            var customerId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
-            if (customerId == 0)
+            // Lấy userId từ JWT claims
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (userId == 0)
             {
                 return BadRequest(new ApiResponse
                 {
                     IsSuccess = false,
                     StatusCode = HttpStatusCode.BadRequest,
-                    ErrorMessages = new List<string> { "CustomerId is missing in claims." }
+                    ErrorMessages = new List<string> { "UserId is missing in claims." }
                 });
             }
 
-            var response = await _membershipUsage.GetMyMembershipStatusAsync(customerId);
+            // Lấy CustomerId từ UserId
+            var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "Customer not found for this user." }
+                });
+            }
+
+            var response = await _membershipUsage.GetMyMembershipStatusAsync(customer.Id);
 
             if (!response.IsSuccess)
             {

@@ -14,8 +14,13 @@ public class ConsultationService : IConsultationService
         _context = context;
     }
 
-    public async Task<ConsultationDTO> CreateConsultationAsync(int customerId, CreateConsultationDTO dto)
+    public async Task<ConsultationDTO> CreateConsultationAsync(int userId, CreateConsultationDTO dto)
     {
+        // Lấy CustomerId từ UserId
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null)
+            throw new Exception("Customer không tồn tại");
+
         // Kiểm tra Coach tồn tại
         var coach = await _context.Coaches.FindAsync(dto.CoachId);
         if (coach == null)
@@ -35,7 +40,7 @@ public class ConsultationService : IConsultationService
             throw new Exception("Huấn luyện viên đã có lịch vào thời gian này");
 
         var consultation = dto.Adapt<Consultation>();
-        consultation.CustomerId = customerId;
+        consultation.CustomerId = customer.Id; // Sử dụng customer.Id thay vì userId
         consultation.Status = ConsultationStatus.Scheduled;
         consultation.Type = ConsultationType.Chat; 
         consultation.Amount = 0;
@@ -55,11 +60,21 @@ public class ConsultationService : IConsultationService
         // Lọc theo vai trò
         if (role.ToLower() == "customer")
         {
-            query = query.Where(c => c.CustomerId == userId);
+            // Lấy CustomerId từ UserId
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null)
+                return new List<ConsultationDTO>();
+                
+            query = query.Where(c => c.CustomerId == customer.Id);
         }
         else if (role.ToLower() == "coach")
         {
-            query = query.Where(c => c.CoachId == userId);
+            // Lấy CoachId từ UserId
+            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (coach == null)
+                return new List<ConsultationDTO>();
+                
+            query = query.Where(c => c.CoachId == coach.Id);
         }
 
         // Lọc theo trạng thái nếu có
@@ -82,11 +97,21 @@ public class ConsultationService : IConsultationService
         // Kiểm tra quyền truy cập
         if (role.ToLower() == "customer")
         {
-            query = query.Where(c => c.CustomerId == userId && c.Id == id);
+            // Lấy CustomerId từ UserId
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null)
+                return null;
+                
+            query = query.Where(c => c.CustomerId == customer.Id && c.Id == id);
         }
         else if (role.ToLower() == "coach")
         {
-            query = query.Where(c => c.CoachId == userId && c.Id == id);
+            // Lấy CoachId từ UserId
+            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (coach == null)
+                return null;
+                
+            query = query.Where(c => c.CoachId == coach.Id && c.Id == id);
         }
 
         var consultation = await query.FirstOrDefaultAsync();
@@ -100,10 +125,18 @@ public class ConsultationService : IConsultationService
             throw new Exception("Buổi tư vấn không tồn tại");
 
         // Kiểm tra quyền cập nhật
-        if (role.ToLower() == "customer" && consultation.CustomerId != userId)
-            throw new Exception("Không có quyền cập nhật buổi tư vấn này");
-        if (role.ToLower() == "coach" && consultation.CoachId != userId)
-            throw new Exception("Không có quyền cập nhật buổi tư vấn này");
+        if (role.ToLower() == "customer")
+        {
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null || consultation.CustomerId != customer.Id)
+                throw new Exception("Không có quyền cập nhật buổi tư vấn này");
+        }
+        else if (role.ToLower() == "coach")
+        {
+            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (coach == null || consultation.CoachId != coach.Id)
+                throw new Exception("Không có quyền cập nhật buổi tư vấn này");
+        }
 
         // Kiểm tra trạng thái hiện tại có thể cập nhật không
         if (consultation.Status == ConsultationStatus.Completed || consultation.Status == ConsultationStatus.Cancelled)
@@ -123,10 +156,18 @@ public class ConsultationService : IConsultationService
             throw new Exception("Buổi tư vấn không tồn tại");
 
         // Kiểm tra quyền xóa
-        if (role.ToLower() == "customer" && consultation.CustomerId != userId)
-            throw new Exception("Không có quyền xóa buổi tư vấn này");
-        if (role.ToLower() == "coach" && consultation.CoachId != userId)
-            throw new Exception("Không có quyền xóa buổi tư vấn này");
+        if (role.ToLower() == "customer")
+        {
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null || consultation.CustomerId != customer.Id)
+                throw new Exception("Không có quyền xóa buổi tư vấn này");
+        }
+        else if (role.ToLower() == "coach")
+        {
+            var coach = await _context.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (coach == null || consultation.CoachId != coach.Id)
+                throw new Exception("Không có quyền xóa buổi tư vấn này");
+        }
 
         // Chỉ cho phép xóa khi chưa diễn ra
         if (consultation.Status != ConsultationStatus.Scheduled)

@@ -18,11 +18,21 @@ public class ConversationService : IConversationService
         IEnumerable<Conversation> conversations;
         if (role.ToLower() == "customer")
         {
-            conversations = await _unitOfWork.Conversations.GetAllAsync(c => c.CustomerId == userId);
+            // Lấy CustomerId từ UserId
+            var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null)
+                return new List<ConversationDTO>();
+                
+            conversations = await _unitOfWork.Conversations.GetAllAsync(c => c.CustomerId == customer.Id);
         }
         else if (role.ToLower() == "coach")
         {
-            conversations = await _unitOfWork.Conversations.GetAllAsync(c => c.CoachId == userId);
+            // Lấy CoachId từ UserId
+            var coach = await _unitOfWork.Coaches.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (coach == null)
+                return new List<ConversationDTO>();
+                
+            conversations = await _unitOfWork.Conversations.GetAllAsync(c => c.CoachId == coach.Id);
         }
         else
         {

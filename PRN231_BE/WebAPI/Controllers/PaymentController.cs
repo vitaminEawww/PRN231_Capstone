@@ -37,11 +37,18 @@ namespace WebAPI.Controllers
         [HttpPost("purchase-package")]
         public async Task<IActionResult> PurchasePackageAsync([FromBody] PurchasePackageDTO purchaseDto)
         {
-            // Lấy customerId từ JWT claims
-            var customerId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
-            if (customerId == 0)
+            // Lấy userId từ JWT claims
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (userId == 0)
             {
-                return BadRequest("CustomerId is missing in claims.");
+                return BadRequest("UserId is missing in claims.");
+            }
+
+            // Lấy CustomerId từ UserId
+            var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null)
+            {
+                return BadRequest("Customer not found for this user.");
             }
 
             try
@@ -73,7 +80,7 @@ namespace WebAPI.Controllers
                 // Lưu thông tin thanh toán vào database
                 var payment = new Payment
                 {
-                    CustomerId = customerId, // Lấy từ JWT
+                    CustomerId = customer.Id, // Sử dụng customer.Id thay vì userId
                     MembershipPackageId = purchaseDto.MembershipPackageId,
                     Amount = package.Price,  // Lấy giá tiền từ gói
                     Status = PaymentStatus.Pending,  // Trạng thái ban đầu là "Pending"
