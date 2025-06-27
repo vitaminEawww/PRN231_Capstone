@@ -36,6 +36,8 @@ namespace Repositories.Repository
 
         public IGenericRepository<Rating> Ratings { get; }
 
+        public IGenericRepository<MemberShipUsage> MemberShipUsages { get; }
+
         public UnitOfWork(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
@@ -58,6 +60,7 @@ namespace Repositories.Repository
             CustomerStatistics = new GenericRepository<CustomerStatistics>(_dbContext);
             SystemReports = new GenericRepository<SystemReport>(_dbContext);
             Ratings = new GenericRepository<Rating>(_dbContext);
+            MemberShipUsages = new GenericRepository<MemberShipUsage>(_dbContext);
         }
 
         public async Task<int> SaveAsync()
