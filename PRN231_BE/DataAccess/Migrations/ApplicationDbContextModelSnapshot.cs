@@ -98,11 +98,6 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<int>("ExperienceYears")
                         .HasColumnType("int");
 
@@ -118,11 +113,6 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Qualifications")
                         .IsRequired()
@@ -282,7 +272,10 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Customer", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(500)
@@ -330,9 +323,15 @@ namespace DataAccess.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MembershipPackageId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Customers");
                 });
@@ -1199,6 +1198,9 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId")
+                        .IsUnique();
+
                     b.HasIndex("RecordDate");
 
                     b.HasIndex("CustomerId", "RecordDate");
@@ -1416,15 +1418,15 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.Customer", b =>
                 {
-                    b.HasOne("DataAccess.Entities.User", "User")
-                        .WithOne("Customer")
-                        .HasForeignKey("DataAccess.Entities.Customer", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("DataAccess.Entities.MembershipPackage", null)
                         .WithMany("Customers")
                         .HasForeignKey("MembershipPackageId");
+
+                    b.HasOne("DataAccess.Entities.User", "User")
+                        .WithOne("Customer")
+                        .HasForeignKey("DataAccess.Entities.Customer", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1622,8 +1624,8 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.SmokingRecord", b =>
                 {
                     b.HasOne("DataAccess.Entities.Customer", "Customer")
-                        .WithMany("SmokingRecords")
-                        .HasForeignKey("CustomerId")
+                        .WithOne("SmokingRecord")
+                        .HasForeignKey("DataAccess.Entities.SmokingRecord", "CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1690,7 +1692,7 @@ namespace DataAccess.Migrations
 
                     b.Navigation("Ratings");
 
-                    b.Navigation("SmokingRecords");
+                    b.Navigation("SmokingRecord");
 
                     b.Navigation("Statistics");
 

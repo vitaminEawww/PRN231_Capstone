@@ -12,6 +12,8 @@ using Services.IServices;
 using System.Text;
 using Services.Services;
 using MapsterMapper;
+using Services.BackgroundServices;
+
 
 
 namespace WebAPI
@@ -98,7 +100,9 @@ namespace WebAPI
             builder.Services.AddSignalR();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtTokenService>();
+            builder.Services.AddScoped<IDataSeederService, DataSeederService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+
             builder.Services.AddScoped<IVnPayService, VnPayService>();
             builder.Services.AddScoped<IMembershipPackageService, MembershipPackageService>();
             builder.Services.AddScoped<IMembershipUsage, MembershipUsageService>();
@@ -106,7 +110,37 @@ namespace WebAPI
             builder.Services.AddScoped<ICoachService, CoachService>();
             builder.Services.AddScoped<IConversationService, ConversationService>();
 
+            builder.Services.AddScoped<ISmokingRecordService, SmokingRecordService>();
+            builder.Services.AddScoped<IPlanService, PlanService>();
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
+            builder.Services.AddScoped<IDailyProgressService, DailyProgressService>();
+            builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+            builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+
+            // Đăng ký Background Services
+            builder.Services.AddHostedService<StatisticsUpdateBackgroundService>();
+            builder.Services.AddHostedService<LeaderboardUpdateBackgroundService>();
+            builder.Services.AddHostedService<NotificationBackgroundService>();
+
+
             var app = builder.Build();
+
+            //* Seed data
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var dataSeederService = services.GetRequiredService<IDataSeederService>();
+                    dataSeederService.SeedDefaultDataAsync().Wait();
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+            }
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
